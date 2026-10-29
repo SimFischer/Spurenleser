@@ -117,10 +117,12 @@ Der Workflow testet jeden Push auf `main`, stellt ausschließlich die statischen
 
 Im Repository unter **Settings → Pages → Build and deployment → Source: GitHub Actions** auswählen, sofern Pages noch nicht aktiviert ist. Danach den Workflow ausführen oder erneut auf `main` pushen. Die voraussichtliche Projektadresse lautet `https://simfischer.github.io/Spurenleser/`; erst ein erfolgreiches Deployment bestätigt die Veröffentlichung. Die App benötigt keine Umgebungsvariablen oder Secrets.
 
+Bei der Einrichtung am 29.10.2026 bestanden die Tests auf GitHub. Das Deployment stoppte bei `configure-pages`, weil Pages für das Repository noch nicht aktiviert war (`Get Pages site failed`, HTTP 404). Nach Auswahl von **GitHub Actions** den Workflow über **Actions → Test and publish GitHub Pages → Run workflow** erneut starten. Die vorbereitete App ist davon unabhängig lokal vollständig spielbar.
+
 ## Validierung und technische Zusammenfassung
 
 Die automatisierten Tests durchlaufen alle Storyszenen und alle fünf Endzustände über gültige Spielhandlungen. Sie prüfen Bedingungen, verzögerte Beobachtungsfreigabe, Beweisqualität, falsche/zu frühe Beschuldigungen, Weiterermitteln, Erkenntnisse, Zustandsduplikate, Speichern/Laden, ungültige Speicherstände und verweigerten Speicherzugriff. Beliebig viele zyklische Besuchsreihenfolgen sind nicht einzeln enumerierbar.
 
-Manuell im Chromium-basierten Browser geprüft: Start, Notizbuch, persistenter Stand nach Neuladen, schwache und starke finale Beweisauswahl sowie das Ende mit falschem Motiv. Responsive geprüft bei 1024 × 768 (iPad Querformat), 768 × 1024 (Hochformat) und 390 × 844; keine horizontalen Seitenüberläufe. Kein Test auf einem physischen iPad/Safari. Die Lesedauer ist noch nicht im Unterricht evaluiert.
+Manuell im Chromium-basierten Browser geprüft: Start, Fortsetzen, Notizbuch, persistenter Stand nach Neuladen, Neustart mit Abbruch/Bestätigung, Lehrkräfte-Lösung, schwache und starke finale Beweisauswahl sowie das Ende mit falschem Motiv. Responsive geprüft bei 1024 × 768 (iPad Querformat), 768 × 1024 (Hochformat) und 390 × 844; keine horizontalen Seitenüberläufe. Kein Test auf einem physischen iPad/Safari. Die Lesedauer ist noch nicht im Unterricht evaluiert.
 
 MVP mit Vanilla-JavaScript-ES-Modulen, deklarativen Storydaten, versionierten lokalen Spielständen, nativen Dialogen, eigener Illustration und GitHub-Pages-Workflow. Kein Backend, keine Paketinstallation und kein Produktionsbuild notwendig. Ein Editor ist nicht Bestandteil von Version 1.

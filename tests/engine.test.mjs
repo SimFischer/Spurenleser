@@ -122,3 +122,25 @@ test('Alle Szenen, Ziele, Daten-IDs und finale Zustände konsistent', () => {
 test('Alle Storyszenen in den gültigen Testspielwegen erreicht', () => {
   for (const id of Object.keys(a.scenes)) assert.ok(reached.has(id), `Nicht erreicht: ${id}`);
 });
+test('Spätere Gespräche bieten neue Texte und wissensabhängige Fragen', () => {
+  const state = investigate(true);
+  enter(a, state, 'jonas');
+  const variant = a.scenes.jonas.variants.find(item => meets(state, item));
+  assert.ok(variant.text.includes('Johann'));
+  assert.ok(availableChoices(a, state).some(choice => choice.to === 'kinship'));
+  const initial = start(a); enter(a, initial, 'jonas');
+  assert.equal(a.scenes.jonas.variants.find(item => meets(initial, item)), undefined);
+  assert.ok(!availableChoices(a, initial).some(choice => choice.to === 'kinship'));
+});
+test('Verschiedene Abenteuer speichern unabhängig voneinander', () => {
+  const map = new Map();
+  const storage = { setItem: (k,v) => map.set(k,v), getItem: k => map.get(k) ?? null, removeItem: k => map.delete(k) };
+  const second = { ...a, id: 'zweiter-testfall' };
+  const one = investigate(); const two = start(second);
+  save(one, storage); save(two, storage);
+  assert.equal(load(a, storage).currentScene, 'workshop');
+  assert.equal(load(second, storage).currentScene, 'arrival');
+  clear(a, storage);
+  assert.equal(load(a, storage), null);
+  assert.ok(load(second, storage));
+});
