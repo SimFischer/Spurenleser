@@ -3,6 +3,9 @@ import { start, choose, accuse, meets } from './engine.js';
 import { save, load, clear } from './save.js';
 import { entries } from './notebook.js';
 import { teacherContent } from './teacher.js';
+import { createTeacherAccess } from './teacher-access.js';
+import { archivePresentation } from '../data/presentation.js';
+const teacherAccess = createTeacherAccess();
 let adventure = adventures.find(item => load(item)) || adventures[0];
 let state = load(adventure);
 let settings = { large: false, ruler: false };
@@ -27,29 +30,101 @@ function notify(message) {
   clearTimeout(noticeTimer);
   const node = document.querySelector('#notifications');
   node.replaceChildren();
-  const p = document.createElement('p'); p.textContent = message; node.append(p);
+  const p = document.createElement('p');
+  if (message.startsWith('Neue Erkenntnis: ')) {
+    const title = document.createElement('strong'); title.textContent = 'Neue Erkenntnis';
+    const text = document.createElement('span'); text.textContent = message.slice('Neue Erkenntnis: '.length);
+    p.classList.add('insight-notice'); p.append(title, text);
+  } else p.textContent = message;
+  node.append(p);
   noticeTimer = setTimeout(() => node.replaceChildren(), 12000);
 }
 function render(focus = false) {
+  if (route === 'game' && !state) route = 'home';
+  document.body.dataset.view = route;
   nav.innerHTML = route === 'game' && state
     ? `<button data-action="notebook" aria-label="Notizbuch öffnen">▤ <span>Notizbuch</span><b>${state.clues.length}</b></button><button data-action="inventory" aria-label="Inventar öffnen">◈ <span>Inventar</span></button><button data-action="menu" aria-label="Menü öffnen">☰ <span>Menü</span></button>`
     : `<a href="#adventures">Abenteuer</a><a href="#teacher">Für Lehrkräfte</a>`;
   if (route === 'home') renderHome();
   else if (route === 'adventures') renderAdventures();
-  else if (route === 'teacher') main.innerHTML = teacherContent(adventure, escape);
+  else if (route === 'teacher') renderTeacher();
   else if (route === 'game' && state) renderGame();
   else { route = 'home'; renderHome(); }
   if (focus) { window.scrollTo({ top: 0, behavior: 'instant' }); main.focus({ preventScroll: true }); }
 }
 function renderHome() {
-  main.innerHTML = `<section class="hero"><div class="hero-copy"><span class="eyebrow"><span class="gold-line"></span> DEIN NÄCHSTER FALL WARTET</span><h1>Jede Geschichte<br>hinterlässt <em>Spuren.</em></h1><p class="hero-lead">Lies genau. Sammle Hinweise.<br>Löse den Fall.</p><p class="hero-description">Werde Teil der Geschichte. Entdecke verborgene Hinweise und finde heraus, was wirklich passiert ist.</p><div class="hero-actions">${button('Abenteuer starten <span aria-hidden="true">↗</span>', 'adventures', 'primary')}${state ? button('Fortsetzen →', 'continue', 'secondary') : ''}</div><a class="teacher-link" href="#teacher">Für Lehrkräfte <span aria-hidden="true">→</span></a><div class="hero-meta"><span>Ab Klasse 5</span><span>In deinem Tempo</span><span>Ohne Anmeldung</span></div></div><div class="hero-art"><img src="assets/backgrounds/harbor.svg" alt="Illustriertes Backsteinmuseum am Hafen mit Leuchtturm im warmen Abendlicht"><div class="case-stamp"><span>FALLAKTE 01</span><strong>Eine Uhr fehlt.<br>Ein Geheimnis wartet.</strong><small>KÜSTENMUSEUM · NORDSEEKÜSTE</small></div></div></section>
-  <section class="home-bottom"><div class="section-heading"><div><span class="eyebrow">AUFSCHLAGEN & LOSLEGEN</span><h2>Dein erstes Leseabenteuer</h2></div><a href="#adventures">Alle Abenteuer <span aria-hidden="true">→</span></a></div>${caseCard()}</section><section class="steps" aria-label="So spielst du"><div><span>01</span><h3>Lies zwischen den Zeilen.</h3><p>Jede Aussage kann wichtig sein.</p></div><div><span>02</span><h3>Verbinde die Hinweise.</h3><p>Dein Notizbuch denkt mit.</p></div><div><span>03</span><h3>Finde deine Lösung.</h3><p>Entscheide mit guten Gründen.</p></div></section>`;
+  main.innerHTML = `
+    <section class="library-entrance" aria-label="Willkommen im Geschichtenarchiv">
+      <img class="library-backdrop" src="assets/library/story-archive.webp" alt="" fetchpriority="high">
+      <div class="entrance-shade"></div>
+      <div class="library-welcome">
+        <span class="eyebrow entrance-eyebrow">Das Archiv der unentdeckten Geschichten</span>
+        <img class="entrance-compass" src="assets/ui/compass.svg" alt="" width="64" height="64">
+        <h1>SPURENLESER</h1>
+        <p class="entrance-subtitle">Interaktive Leseabenteuer</p>
+        <span class="ornament" aria-hidden="true">──── ◇ ────</span>
+        <p class="entrance-claim">Lies genau. Sammle Hinweise.<br>Löse den Fall.</p>
+        <div class="entrance-actions">
+          ${button('Abenteuer starten <span aria-hidden="true">→</span>', 'adventures', 'primary')}
+          ${state ? button('Fortsetzen', 'continue', 'secondary') : ''}
+        </div>
+        <a class="teacher-link" href="#teacher">Lehrkräftebereich <span aria-hidden="true">↗</span></a>
+        <p class="entrance-meta">Ab Klasse 5 · In deinem Tempo · Ohne Anmeldung</p>
+      </div>
+      <a class="entrance-signpost" href="#adventures"><span>Die erste Fallakte wartet</span><strong>Eine Uhr fehlt.<br>Ein Geheimnis erwacht.</strong><span aria-hidden="true">↓</span></a>
+    </section>
+    <section class="archive-preview">
+      <div class="section-heading"><div><span class="eyebrow">Aus dem Geschichtenarchiv</span><h2>Schlag ein neues Kapitel auf.</h2></div><a href="#adventures">Zum Archiv →</a></div>
+      ${caseCard()}
+    </section>
+    <section class="steps" aria-label="So spielst du">
+      <div><span>I</span><h3>Lies zwischen den Zeilen.</h3><p>Jede Aussage kann wichtig sein.</p></div>
+      <div><span>II</span><h3>Verbinde die Hinweise.</h3><p>Dein Ermittlungsjournal bewahrt die Spuren.</p></div>
+      <div><span>III</span><h3>Finde deine Lösung.</h3><p>Entscheide mit guten Gründen.</p></div>
+    </section>`;
 }
-function caseCard(adventure = adventures[0]) {
-  return `<article class="adventure-card"><div class="card-art"><img src="assets/objects/watch.svg" alt="Silberne Taschenuhr mit Kette auf einer alten Seekarte"><span class="case-number">${String(adventures.indexOf(adventure) + 1).padStart(2, '0')}</span></div><div class="card-copy"><div class="tags"><span>${adventure.level}</span><span>${adventure.genre}</span><span>◷ ${adventure.duration}</span></div><h3>${adventure.title}</h3><p>${adventure.teaser}</p><div class="card-foot"><span>Genau lesen · Kombinieren · Schlussfolgern</span><button class="button secondary" data-action="open-case" data-adventure="${escape(adventure.id)}">Den Fall öffnen →</button></div></div></article>`;
+function caseCard(item = adventures[0]) {
+  const number = String(adventures.indexOf(item) + 1).padStart(2, '0');
+  const art = archivePresentation[item.id];
+  return `<article class="archive-volume">
+    <div class="book-cover"><span class="book-series">SPURENLESER · BAND ${number}</span>
+      ${art ? `<img src="${escape(art.cover)}" alt="${escape(art.coverAlt)}" loading="lazy">` : '<span class="book-emblem" aria-hidden="true">◇</span>'}
+      <span class="book-cover-title">${escape(item.title)}</span><span class="book-cover-rule" aria-hidden="true">◇</span>
+    </div>
+    <div class="volume-description"><span class="archive-label">Fallakte № ${number} · Zum Lesen bereit</span>
+      <h2>${escape(item.title)}</h2>
+      <div class="tags"><span>${escape(item.level)}</span><span>${escape(item.genre)}</span><span>ca. ${escape(item.duration)}</span></div>
+      <p>${escape(item.teaser)}</p><p class="volume-skills">Genau lesen · Kombinieren · Schlussfolgern</p>
+      <button class="button primary" data-action="open-case" data-adventure="${escape(item.id)}">Die Fallakte aufschlagen <span aria-hidden="true">→</span></button>
+    </div></article>`;
 }
 function renderAdventures() {
-  main.innerHTML = `<section class="page-intro"><span class="eyebrow">DIE FALLAKTEN</span><h1>Welche Spur verfolgst du?</h1><p>Nimm dir Zeit. Eine gute Beobachtung ist mehr wert als eine schnelle Vermutung.</p></section><section class="case-list" aria-label="Abenteuer">${adventures.map(item => caseCard(item)).join('')}<p class="muted">Die erste Fallakte ist geöffnet. Hier finden später weitere Geschichten ihren Platz.</p></section>`;
+  main.innerHTML = `<section class="page-intro archive-intro"><span class="eyebrow">Das Geschichtenarchiv</span><h1>Welches Buch öffnest du?</h1><p>Manche Geschichten warten darauf, dass jemand ihre Spuren liest.<br>Such dir eine Fallakte aus und beginne deine Ermittlung.</p></section>
+    <section class="case-list" aria-label="Abenteuer im Archiv">${adventures.map(item => caseCard(item)).join('')}<p class="shelf-note">Das Archiv wächst. Hier ist Platz für viele weitere Geschichten.</p></section>`;
+}
+function renderTeacher() {
+  if (teacherAccess.isUnlocked()) {
+    main.innerHTML = `<div class="teacher-access-bar"><a href="#home">← Zur Startseite</a><button class="button quiet" data-action="lock-teacher">Bereich wieder schließen</button></div>${teacherContent(adventure, escape)}`;
+    return;
+  }
+  main.innerHTML = `<section class="teacher-gate paper" aria-labelledby="gate-title">
+    <span class="eyebrow">Unterlagen für Lehrkräfte</span><span class="gate-key" aria-hidden="true">⚿</span>
+    <h1 id="gate-title">Lehrkräftebereich</h1><p>Bitte gib den Zugangscode ein.</p>
+    <form id="teacher-access-form"><label for="teacher-code">Zugangscode</label>
+      <input id="teacher-code" name="code" type="password" required autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="code-error">
+      <p id="code-error" class="code-error" role="alert"></p><button class="button primary" type="submit">Öffnen <span aria-hidden="true">→</span></button>
+    </form><a class="gate-home" href="#home">← Zur Startseite</a>
+    <p class="gate-note">Eine einfache Zugangshürde, damit die Lösung nicht versehentlich aufgeschlagen wird.</p>
+  </section>`;
+  document.querySelector('#teacher-access-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const input = document.querySelector('#teacher-code');
+    if (teacherAccess.unlock(input.value)) { input.value = ''; render(true); }
+    else {
+      document.querySelector('#code-error').textContent = 'Der Code stimmt noch nicht. Bitte achte auf Groß- und Kleinschreibung.';
+      input.setAttribute('aria-invalid', 'true'); input.select(); input.focus();
+    }
+  });
 }
 function renderGame() {
   const original = adventure.scenes[state.currentScene];
@@ -75,18 +150,28 @@ function submitAccusation(event) {
   const result = accuse(adventure, state, data.get('suspect'), data.getAll('evidence'), data.get('motive'));
   persist(); render(true); if (result.message) notify(result.message);
 }
-function openDialog(title, content) {
-  lastFocus = document.activeElement;
+function openDialog(title, content, kind = 'menu') {
+  drawer.dataset.kind = kind;
+  if (!drawer.open) lastFocus = document.activeElement;
   document.querySelector('#drawer-title').textContent = title;
   document.querySelector('#drawer-content').innerHTML = content;
   if (!drawer.open) drawer.showModal();
 }
-function closeDialog() { drawer.close(); lastFocus?.focus(); }
+function closeDialog() { drawer.close(); (lastFocus?.isConnected ? lastFocus : main).focus(); }
 function showNotebook(tab = 'clues') {
   notebookTab = tab;
-  const tabs = { clues: 'Hinweise', people: 'Personen', insights: 'Erkenntnisse', locations: 'Orte' };
+  const tabs = { clues: 'Hinweise', people: 'Personen', insights: 'Erkenntnisse', locations: 'Orte', inventory: 'Inventar' };
   const list = entries(adventure, state, tab);
-  openDialog('Euer Notizbuch', `<p class="muted">Beobachtungen festhalten. Zusammenhänge entdecken.</p><nav class="notebook-tabs" aria-label="Notizbuchbereiche">${Object.entries(tabs).map(([id, title]) => `<button data-tab="${id}" aria-pressed="${id === tab}">${title}</button>`).join('')}</nav><div class="notes-list">${list.length ? list.map(item => `<article class="note"><h3>${escape(item.name)}</h3><p>${escape(item.text)}</p></article>`).join('') : '<p class="empty-note">Hier ist noch Platz für eure ersten Entdeckungen.</p>'}</div>`);
+  const notes = list.map((item, index) => {
+    const initials = item.name.split(' ').map(word => word[0]).slice(0, 2).join('');
+    return `<article class="note note-${tab}"><span class="note-number">${String(index + 1).padStart(2, '0')}</span>
+      ${tab === 'people' ? `<span class="person-monogram" aria-hidden="true">${escape(initials)}</span>` : ''}
+      <div><h3>${escape(item.name)}</h3>${item.role ? `<span class="person-role">${escape(item.role)}</span>` : ''}
+      ${item.text.split('\n\n').map(text => `<p>${escape(text)}</p>`).join('')}</div></article>`;
+  }).join('');
+  openDialog('Euer Ermittlungsjournal', `<div class="journal-intro"><img src="assets/library/investigation-journal.webp" alt="" width="140" height="94"><p>Jede Spur hat ihren Platz.<br>Hier bewahrt ihr, was ihr bereits wisst.</p></div>
+    <nav class="notebook-tabs" aria-label="Journalbereiche">${Object.entries(tabs).map(([id, title]) => `<button data-tab="${id}" aria-pressed="${id === tab}">${title}</button>`).join('')}</nav>
+    <div class="notes-list" aria-label="${tabs[tab]}">${list.length ? notes : '<p class="empty-note">Diese Seite wartet noch auf eure Entdeckungen.</p>'}</div>`, 'journal');
 }
 function showMenu() {
   openDialog('Eine kleine Lesepause', `<div class="menu-actions">${button('Weiterlesen', 'close', 'primary')}${button('Zur Startseite', 'home', 'secondary')}${button(settings.large ? 'Normale Schrift verwenden' : 'Schrift vergrößern', 'text-size', 'secondary')}${button(settings.ruler ? 'Leselineal ausschalten' : 'Leselineal einschalten', 'ruler', 'secondary')}${button('Lehrkräftebereich', 'teacher', 'secondary')}${button('Fall neu beginnen', 'restart', 'quiet')}${button('Spielstand von diesem Gerät löschen', 'delete-save', 'quiet')}</div><p class="muted">Das Leselineal folgt Maus oder Finger über dem Text. Tastatur: Textabsätze werden beim Fokussieren hervorgehoben.</p>`);
@@ -115,6 +200,7 @@ document.addEventListener('click', event => {
     case 'adventures': navigate('adventures'); break;
     case 'home': navigate('home'); break;
     case 'teacher': navigate('teacher'); break;
+    case 'lock-teacher': teacherAccess.lock(); render(true); break;
     case 'continue': navigate('game'); break;
     case 'open-case':
       adventure = adventures.find(item => item.id === target.dataset.adventure) || adventures[0];
@@ -124,10 +210,7 @@ document.addEventListener('click', event => {
     case 'restart': confirmRestart(); break;
     case 'confirm-restart': state = start(adventure); persist(); navigate('game'); break;
     case 'notebook': showNotebook(); break;
-    case 'inventory': {
-      const items = entries(adventure, state, 'inventory');
-      openDialog('Euer Inventar', items.length ? items.map(item => `<article class="note"><h3>${escape(item.name)}</h3><p>${escape(item.text)}</p></article>`).join('') : '<p>Noch keine gesicherten Gegenstände.'); break;
-    }
+    case 'inventory': showNotebook('inventory'); break;
     case 'menu': showMenu(); break;
     case 'close': closeDialog(); break;
     case 'text-size': case 'ruler': {
@@ -141,6 +224,9 @@ document.addEventListener('click', event => {
   }
 });
 drawer.querySelector('#close-drawer').addEventListener('click', closeDialog);
+document.querySelector('.skip').addEventListener('click', event => {
+  event.preventDefault(); main.focus();
+});
 drawer.addEventListener('click', event => { if (event.target === drawer && event.clientX < drawer.getBoundingClientRect().left) closeDialog(); });
 window.addEventListener('hashchange', () => {
   // URL routes never contain scene IDs: browser navigation cannot rewind decisions.
