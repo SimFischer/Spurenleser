@@ -2,7 +2,7 @@
 
 **Interaktive Leseabenteuer · Lies genau. Sammle Hinweise. Löse den Fall.**
 
-Statische Web-App für Klasse 5/6 mit einem vollständigen ersten Fall: **Der Fall der verschwundenen Taschenuhr**. Eine maritime Museumsgeschichte mit vier Akten, verzweigten Gesprächen, Quellenvergleich, Notizbuch, Inventar, automatischen Erkenntnissen und finaler Beweisführung. Eine illustrierte Bibliothek bildet das Geschichtenarchiv; Fälle erscheinen als gebundene Bücher und Archivmappen. Alle Bilder liegen lokal. Ohne Bilddienste, externe Schriften, Accounts, KI/API zur Laufzeit, Musik oder Laufzeitabhängigkeiten.
+Statische Web-App für Klasse 5/6 mit einem vollständigen ersten Fall: **Der Fall der verschwundenen Taschenuhr**. Eine maritime Museumsgeschichte mit vier Akten, verzweigten Gesprächen, Quellenvergleich, Notizbuch, Inventar, automatischen Erkenntnissen und finaler Beweisführung. Eine illustrierte Bibliothek bildet das Geschichtenarchiv; Fälle erscheinen als gebundene Bücher und Archivmappen. Alle Bilder liegen lokal. Ohne Bilddienste, externe Schriftabrufe, Accounts, KI/API zur Laufzeit, Musik oder Laufzeitabhängigkeiten.
 
 ## Lokal starten
 
@@ -24,6 +24,7 @@ npm test
 index.html                 Semantische Hülle, Dialog, Navigation
 css/app.css                Responsive Design, Druck, reduzierte Bewegung
 js/app.js                  Ansichten, Routing, Fokus, Einstellungen
+js/ui.js                   Eigene SVG-Symbole und rein visuelle Choice-Typen
 js/engine.js               Entscheidungen, Effekte, Erkenntnisse, Beweise
 js/state.js                Anfangszustand und Bedingungsprüfung
 js/save.js                 Versionierter localStorage-Spielstand je Fall
@@ -152,3 +153,20 @@ MVP mit Vanilla-JavaScript-ES-Modulen, deklarativen Storydaten, versionierten lo
 - Bestehende Tests für alle Szenen und Enden bestehen weiterhin. Ergänzende Tests prüfen exakte Codeeingabe, Session-Verhalten, gesperrten Sitzungsspeicher sowie bekannte Personeninformationen, Orte und Inventar ohne Zustandsänderung.
 - Im Browser geprüft: zunächst keine Lösungsinhalte im DOM, falscher und richtiger Code, Freischaltung nach Neuladen, erneutes Sperren, bestehender Spielstand, Fortsetzen, Journalregister, vollständiger Ermittlungsweg bis zur erfolgreichen Beweisführung.
 - Responsive visuell und mit DOM-Breiten geprüft: Desktop 1440 × 900, iPad quer 1024 × 768, iPad hoch 768 × 1024 und Smartphone 390 × 844. Kein physischer Safari-/iPad-Test.
+
+
+## Material-Redesign (30.10.2026)
+
+Ausschließlich visuelle Überarbeitung. `story-archive.webp` und alle bisherigen Bilddateien bleiben unverändert. Ebenso unverändert: sämtliche Dateien unter `data/`, Engine, Zustands-/Speichermodul, Notizbuchinhalte und Lehrkräftecode. Es gibt keine neuen Storyszenen, Bedingungen, Enden oder Beweisregeln und keine Speichermigration.
+
+Die Formensprache besteht aus beschnittenen Messingplaketten, vernähten Lederlaschen, Buchrücken, Papierfalzen und leicht versetzten Archivzetteln. Die Aktübersicht und der Lesetext bilden auf Desktop/iPad quer ein zusammenhängendes Journal mit sichtbarem Falz, ungleichen Buchseiten und sichtbarem Seitenschnitt. Unter 900 px wechselt die Ansicht auf eine einzelne Seite; keine erzwungene Doppelseite auf dem Telefon. Das Buch wächst mit dem Text, statt Inhalte in eine feste Höhe zu pressen.
+
+Entscheidungen erhalten nur zur Darstellung einen Typ: Untersuchung, Gespräch, Ort oder Erkenntnis. `js/ui.js` bestimmt diesen Typ anhand der vorhandenen Beschriftung und liefert ein dekoratives SVG-Symbol. Die ursprüngliche Beschriftung, Auswahlreihenfolge, `data-choice`-Indizes, Voraussetzungen und Ziele bleiben erhalten. Diese Klassifikation liest oder verändert keinen Spielzustand. Die Bedienlogik bleibt vollständig in der bisherigen Engine.
+
+Die eigene Symbolsammlung liegt in `assets/ui/archive-symbols.svg`. Symbole sind dekorativ (`aria-hidden`), interaktive Schaltflächen behalten ihre zugänglichen Namen. Messingplaketten werden in Pseudoelementen gezeichnet, sodass unregelmäßige Konturen den Fokusrahmen nicht abschneiden. Neue Erkenntnisse erhalten genau einen kurzen Goldreflex. Auf der Leseseite läuft keine dauerhafte Partikelanimation; `prefers-reduced-motion` unterbindet auch die kurzen Übergänge.
+
+Schriften: lokal ausgeliefertes **Cinzel** für Titel/Archivangaben und **Literata** für gut lesbare Buchtexte. Herkunft und vollständige OFL-Lizenzen liegen in `assets/fonts/`. Vier WOFF2-Dateien, zusammen etwa 197 kB, ohne externe Font-Anfragen. Es wurden keine neuen Rasterbilder erzeugt.
+
+`css/app.css` wurde gezielt ersetzt, nicht um eine Override-Schicht ergänzt. Wiederverwendbare Variablen beschreiben Papier, Holz, Leder, Metall, Typografie und Seitenmaße. Die Komponenten sind in 13 Abschnitte gegliedert, die drei Responsive-Breakpoints stehen gemeinsam am Dateiende. Der lokale Server liefert WOFF2 mit dem passenden MIME-Typ aus.
+
+Geprüft: alle 18 bestehenden Tests; Browser-Spielweg bis zur erfolgreichen finalen Beweisführung; Startseite, Archivakte, Leseseite, Journal, Inventar und Lehrkräfteschrank. Falscher und richtiger Code funktionieren weiterhin. Visuelle und DOM-Breitenprüfung bei 1440 × 900, 1024 × 768, 768 × 1024 und 390 × 844; keine horizontalen Überläufe nach Korrektur des äußeren Buchdeckels. Die Entscheidungsflächen sind mindestens etwa 70 px hoch. Kein Test auf einem physischen iPad/Safari.

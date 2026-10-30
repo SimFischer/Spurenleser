@@ -7,6 +7,8 @@
   <meta name="description" content="Spurenleser – interaktive Leseabenteuer. Lies genau, sammle Hinweise und löse den Fall im Küstenmuseum.">
   <title>Spurenleser · Interaktive Leseabenteuer</title>
   <link rel="icon" href="assets/ui/compass.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/literata-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
   <script type="module" src="js/app.js"></script>
 </head>
@@ -18,7 +20,7 @@
   </header>
   <main id="main" tabindex="-1"></main>
   <footer class="site-footer"><span>Eine gute Geschichte beginnt mit einer Spur.</span><span>Ohne Anmeldung · Dein Spielstand bleibt auf diesem Gerät.</span></footer>
-  <dialog id="drawer" aria-labelledby="drawer-title"><div class="dialog-top"><h2 id="drawer-title"></h2><button id="close-drawer" class="icon-button" aria-label="Schließen">✕</button></div><div id="drawer-content"></div></dialog>
+  <dialog id="drawer" aria-labelledby="drawer-title"><div class="dialog-top"><h2 id="drawer-title"></h2><button id="close-drawer" class="icon-button" aria-label="Schließen"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="assets/ui/archive-symbols.svg#close"></use></svg></button></div><div id="drawer-content"></div></dialog>
   <div id="notifications" role="status" aria-live="polite" aria-atomic="true"></div>
   <noscript>Bitte aktiviere JavaScript, um das Leseabenteuer zu spielen. Es werden keine externen Dienste benötigt.</noscript>
 </body>
